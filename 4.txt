@@ -1,0 +1,101 @@
+
+
+import org.apache.hadoop.conf.*; 
+import org.apache.hadoop.fs.*; 
+import org.apache.hadoop.io.*; 
+import org.apache.hadoop.mapreduce.*; 
+import org.apache.hadoop.mapreduce.lib.input.*; 
+import org.apache.hadoop.mapreduce.lib.output.*; 
+import java.io.*; 
+import java.util.*;
+
+public class MovieTags {
+
+    public static class TagMapper extends Mapper<Object, Text, Text, Text> {
+        public void map(Object k, Text v, Context c) throws IOException, InterruptedException {
+            String[] t = v.toString().split(",");
+            if (t.length == 4)
+                c.write(new Text(t[1]), new Text(t[2]));  // movieId → tag
+        }
+    }
+
+    public static class TagReducer extends Reducer<Text, Text, Text, Text> {
+        public void reduce(Text k, Iterable<Text> vals, Context c) throws IOException, InterruptedException {
+            Set<String> uniqueTags = new HashSet<>();
+            for (Text t : vals) 
+                uniqueTags.add(t.toString());
+            c.write(k, new Text(String.join(", ", uniqueTags)));
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+
+        if (args.length != 2) System.exit(1);
+
+        Job j = Job.getInstance(new Configuration(), "MovieTags");
+        j.setJarByClass(MovieTags.class);
+
+        j.setMapperClass(TagMapper.class);
+        j.setReducerClass(TagReducer.class);
+
+        j.setOutputKeyClass(Text.class);
+        j.setOutputValueClass(Text.class);
+
+        FileInputFormat.addInputPath(j, new Path(args[0]));
+        FileOutputFormat.setOutputPath(j, new Path(args[1]));
+
+        System.exit(j.waitForCompletion(true) ? 0 : 1);
+    }
+}
+
+
+Input (movietags.txt)
+-
+
+1,101,comedy,1234567890
+2,101,drama,1234567891
+3,102,action,1234567892
+4,103,comedy,1234567893
+5,104,thriller,1234567894
+6,105,sci-fi,1234567895
+7,105,family,1234567896
+8,103,suspense,1234567897
+9,104,action,1234567898
+10,104,kids,1234567899
+
+
+Expected OUTPUT
+-
+
+101  comedy, drama
+102  action
+103  comedy, suspense
+104  thriller, action, kids
+105  sci-fi, family
+
+
+STEPS
+-
+
+1. Compile:
+javac -source 8 -target 8 -cp "$(hadoop classpath)" MovieTags.java
+
+2. Create JAR folder:
+mkdir MT
+mv *.class MT/
+
+3. Make JAR:
+jar -cvf MT.jar -C MT/ .
+
+4. Add input to HDFS:
+hdfs dfs -mkdir /input4
+hdfs dfs -put movietags.txt /input4
+
+5. (If NameNode in safe mode)
+hdfs dfsadmin -safemode leave
+
+6. Run the job:
+hadoop jar MT.jar MovieTags /input4 /output4
+
+7. View output:
+hdfs dfs -cat /output4/part-r-00000

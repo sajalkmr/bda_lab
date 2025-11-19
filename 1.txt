@@ -1,0 +1,116 @@
+
+
+1. Update System
+sudo apt update && sudo apt upgrade -y
+
+2. Install Java 8
+sudo apt install openjdk-8-jdk -y
+java -version
+
+3. Install SSH
+sudo apt install ssh -y
+sudo service ssh start
+
+4. Download Hadoop
+cd ~
+wget https://downloads.apache.org/hadoop/common/hadoop-3.2.3/hadoop-3.2.3.tar.gz
+tar -xvzf hadoop-3.2.3.tar.gz
+mv hadoop-3.2.3 hadoop
+
+5. Add Environment Variables
+nano ~/.bashrc
+(Add this block)
+
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+export HADOOP_HOME=$HOME/hadoop
+export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
+
+export HADOOP_MAPRED_HOME=$HADOOP_HOME
+export HADOOP_COMMON_HOME=$HADOOP_HOME
+export HADOOP_HDFS_HOME=$HADOOP_HOME
+export HADOOP_YARN_HOME=$HADOOP_HOME
+export HADOOP_CONF_DIR=$HADOOP_HOME/etc/hadoop
+export HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib/native
+export HADOOP_OPTS="-Djava.library.path=$HADOOP_HOME/lib/native"
+
+source ~/.bashrc
+
+6. Edit Hadoop Config Files
+cd ~/hadoop/etc/hadoop
+
+6.1 hadoop-env.sh
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+
+6.2 core-site.xml
+<configuration>
+  <property>
+    <name>fs.defaultFS</name>
+    <value>hdfs://localhost:9000</value>
+  </property>
+</configuration>
+
+6.3 hdfs-site.xml
+<configuration>
+  <property>
+    <name>dfs.replication</name>
+    <value>1</value>
+  </property>
+</configuration>
+
+6.4 mapred-site.xml
+cp mapred-site.xml.template mapred-site.xml
+<configuration>
+  <property>
+    <name>mapreduce.framework.name</name>
+    <value>yarn</value>
+  </property>
+</configuration>
+
+6.5 yarn-site.xml
+<configuration>
+  <property>
+    <name>yarn.nodemanager.aux-services</name>
+    <value>mapreduce_shuffle</value>
+  </property>
+</configuration>
+
+7. Setup SSH keys
+ssh-keygen -t rsa -P ""
+cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+ssh localhost
+
+8. Format HDFS
+hdfs namenode -format
+
+9. Start Hadoop
+start-dfs.sh
+start-yarn.sh
+
+10. Verify Services
+jps
+
+
+HADOOP FILE MANAGEMENT COMMANDS
+-
+1. Create Directory
+hadoop fs -mkdir /bda_folder
+hadoop fs -mkdir /bda_folder/bda1
+
+2. Add File
+echo "Hello Hadoop" > ex1.txt
+hadoop fs -put ex1.txt /bda_folder/bda1
+
+3. Retrieve File
+hadoop fs -get /bda_folder/bda1/ex1.txt ~/Downloads
+
+4. Delete File
+hadoop fs -rm /bda_folder/bda1/ex1.txt
+
+5. Delete Directory
+hadoop fs -rm -r /bda_folder
+
+-
+Hadoop Web UIs:
+HDFS UI → http://localhost:9870
+YARN UI → http://localhost:8088
