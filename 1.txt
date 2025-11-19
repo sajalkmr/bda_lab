@@ -114,3 +114,34 @@ hadoop fs -rm -r /bda_folder
 Hadoop Web UIs:
 HDFS UI → http://localhost:9870
 YARN UI → http://localhost:8088
+
+
+Execution Steps:
+
+1. ssh localhost
+
+2. ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
+
+3. chmod 0600 ~/.ssh/authorized_keys
+
+4. hadoop-3.2.3/bin/hdfs namenode -format
+
+5. export PDSH_RCMD_TYPE=ssh
+
+6. start-all.sh
+
+7. jps
+
+8. sudo update-alternatives --config javac
+
+9. javac -source 8 -target 8 -cp "$(hadoop classpath)" filename.java
+
+10. jar -cvf MM3.jar -C MM3 /.
+
+11. hdfs dfs -put input.txt /input2
+
+12. hadoop jar MM3.jar Filename /input2 /output2
+
+13. hdfs dfs -ls /output2
+
+14. hdfs dfs -cat /output2/part-r-00000

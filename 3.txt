@@ -64,28 +64,32 @@ Nepal Freezing
 Switzerland Freezing
 
 
-STEPS 
--
+Execution Steps:
 
-1. Compile:
-javac -source 8 -target 8 -cp "$(hadoop classpath)" WeatherMapReduce.java
+1. ssh localhost
 
-2. Create JAR folder:
-mkdir MM4
-mv *.class MM4/
+2. ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
 
-3. Make JAR:
-jar -cvf MM4.jar -C MM4/ .
+3. chmod 0600 ~/.ssh/authorized_keys
 
-4. Upload input to HDFS:
-hdfs dfs -mkdir /input3
-hdfs dfs -put inputw.txt /input3
+4. hadoop-3.2.3/bin/hdfs namenode -format
 
-5. (If NameNode in safemode)
-hdfs dfsadmin -safemode leave
+5. export PDSH_RCMD_TYPE=ssh
 
-6. Run the job:
-hadoop jar MM4.jar WMR /input3 /output3
+6. start-all.sh
 
-7. View output:
-hdfs dfs -cat /output3/part-r-00000
+7. jps
+
+8. sudo update-alternatives --config javac
+
+9. javac -source 8 -target 8 -cp "$(hadoop classpath)" WMR.java
+
+10. jar -cvf MM4.jar -C MM4 /.
+
+11. hdfs dfs -put inputw.txt /input3
+
+12. hadoop jar MM4.jar WMR /input3 /output3
+
+13. hdfs dfs -ls /output3
+
+14. hdfs dfs -cat /output3/part-r-00000
