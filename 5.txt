@@ -1,0 +1,60 @@
+
+
+Dataset:
+db.users.insertMany([
+{ name: "Alice", age: 30, gender: "Female", city: "New York" },
+{ name: "Bob", age: 25, gender: "Male", city: "Los Angeles" },
+{ name: "Charlie", age: 35, gender: "Male", city: "Chicago" },
+{ name: "David", age: 28, gender: "Male", city: "San Francisco" },
+{ name: "Eve", age: 22, gender: "Female", city: "Boston" },
+{ name: "Frank", age: 40, gender: "Male", city: "Houston" },
+{ name: "Grace", age: 27, gender: "Female", city: "Miami" },
+{ name: "Hannah", age: 29, gender: "Female", city: "Seattle" },
+{ name: "Isaac", age: 31, gender: "Male", city: "Denver" },
+{ name: "Jack", age: 26, gender: "Male", city: "Dallas" }
+])
+
+1. Count total documents:
+db.users.countDocuments({})
+
+2. Count users older than 25:
+db.users.countDocuments({ age: { $gt: 25 } })
+
+3. Sort users by age ascending:
+db.users.find().sort({ age: 1 })
+
+4. Skip 9 documents:
+db.users.find().skip(9)
+
+5. Aggregation (filter >25, group by gender, sort desc, limit 5):
+db.users.aggregate([
+{ $match: { age: { $gt: 25 } } },
+{ $group: { _id: "$gender", count: { $sum: 1 } } },
+{ $sort: { count: -1 } },
+{ $limit: 5 }
+])
+
+6. Combined (sort desc, skip 3, limit 5):
+db.users.find().sort({ age: -1 }).skip(3).limit(5)
+
+MongoDB Installation Steps (Ubuntu):
+sudo apt update
+sudo apt install curl
+curl -fsSL https://pgp.mongodb.com/server-7.0.asc | sudo gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor
+echo "deb [ signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+sudo apt update
+sudo apt install -y mongodb-org
+sudo systemctl start mongod
+sudo systemctl enable mongod
+sudo systemctl status mongod
+mongosh
+(If needed: sudo apt install -y mongodb-mongosh)
+
+Inside Mongo Shell:
+use test
+db.users.insertMany([...dataset...])
+Run queries.
+exit
+
+To re-run next time:
+mongosh
