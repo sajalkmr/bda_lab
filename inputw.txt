@@ -1,0 +1,6 @@
+Australia,5
+China,25
+India,-3
+Malaysia,30
+Nepal,-4
+Switzerland,-10

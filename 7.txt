@@ -1,0 +1,117 @@
+
+
+DATABASE COMMANDS
+-
+CREATE DATABASE IF NOT EXISTS my_database;
+ALTER DATABASE my_database SET DBPROPERTIES ('creator'='admin','created_on'='2025-04-07');
+DROP DATABASE IF EXISTS my_database CASCADE;
+
+Additional Example:
+CREATE DATABASE book_db;
+ALTER DATABASE book_db SET DBPROPERTIES ('created_by'='admin');
+DROP DATABASE book_db CASCADE;
+
+
+TABLE COMMANDS
+-
+CREATE TABLE IF NOT EXISTS my_table (
+  id INT,
+  name STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+ALTER TABLE my_table RENAME TO my_new_table;
+ALTER TABLE my_new_table ADD COLUMNS (age INT);
+ALTER TABLE my_new_table REPLACE COLUMNS (
+  id INT,
+  name STRING,
+  age INT,
+  city STRING
+);
+
+DROP TABLE IF EXISTS my_new_table;
+
+Additional Example:
+CREATE TABLE book (
+  id INT,
+  title STRING,
+  author STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+ALTER TABLE book ADD COLUMNS (published_year INT);
+ALTER TABLE book RENAME TO book_info;
+DROP TABLE book_info;
+
+
+VIEW COMMANDS
+-
+CREATE VIEW IF NOT EXISTS my_view AS SELECT id, name FROM my_table;
+ALTER VIEW my_view RENAME TO my_updated_view;
+DROP VIEW IF EXISTS my_updated_view;
+
+Additional:
+CREATE VIEW book_view AS SELECT id, title FROM book;
+ALTER VIEW book_view SET TBLPROPERTIES ('comment'='Books title view');
+DROP VIEW book_view;
+
+
+FUNCTION COMMANDS
+-
+CREATE TEMPORARY FUNCTION my_upper AS 'org.apache.hadoop.hive.ql.udf.UDFUpper';
+
+CREATE FUNCTION mydb.my_func AS 'com.example.MyUDF'
+USING JAR 'hdfs:///user/hive/udfs/myudf.jar';
+
+DROP FUNCTION IF EXISTS mydb.my_func;
+
+Built-in function example:
+SELECT UPPER(title) FROM book;
+
+Custom UDF steps:
+ADD JAR /home/user/hive-udfs/myudf.jar;
+CREATE TEMPORARY FUNCTION custom_upper AS 'com.example.MyUpperUDF';
+SELECT custom_upper(title) FROM book;
+DROP TEMPORARY FUNCTION custom_upper;
+
+
+INDEX COMMANDS
+-
+CREATE INDEX my_index
+ON TABLE my_table (name)
+AS 'COMPACT'
+WITH DEFERRED REBUILD;
+
+ALTER INDEX my_index ON my_table REBUILD;
+
+DROP INDEX IF EXISTS my_index ON my_table;
+
+Additional:
+CREATE INDEX book_title_index ON TABLE book (title) AS 'COMPACT' WITH DEFERRED REBUILD;
+ALTER INDEX book_title_index ON book REBUILD;
+DROP INDEX book_title_index;
+
+
+HIVE EXECUTION STEPS (Compact)
+--
+1. Start Hadoop:
+ssh localhost
+ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
+cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+hdfs namenode -format
+export PDSH_RCMD_TYPE=ssh
+start-all.sh
+jps
+
+2. Start Hive:
+hive
+
+3. Run commands directly in Hive CLI.
+
+4. Exit:
+exit;

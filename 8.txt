@@ -1,0 +1,107 @@
+
+
+
+import java.io.*; 
+import java.util.*; 
+import org.apache.hadoop.conf.*; 
+import org.apache.hadoop.fs.*; 
+import org.apache.hadoop.io.*; 
+import org.apache.hadoop.mapreduce.*; 
+import org.apache.hadoop.mapreduce.lib.input.*; 
+import org.apache.hadoop.mapreduce.lib.output.*;
+
+public class WordCount {
+
+    public static class TokenizerMapper extends Mapper<Object, Text, Text, IntWritable>{ 
+        private final static IntWritable one = new IntWritable(1); 
+        private Text word = new Text();
+        public void map(Object k, Text v, Context c) throws IOException, InterruptedException {
+            StringTokenizer t = new StringTokenizer(v.toString());
+            while (t.hasMoreTokens()) {
+                String w = t.nextToken().replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
+                if (!w.isEmpty()) { word.set(w); c.write(word, one); }
+            }
+        }
+    }
+
+    public static class IntSumReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
+        public void reduce(Text k, Iterable<IntWritable> vals, Context c) throws IOException, InterruptedException {
+            int s = 0; 
+            for (IntWritable v : vals) s += v.get();
+            c.write(k, new IntWritable(s));
+        }
+    }
+
+    public static void main(String[] a) throws Exception {
+        Job j = Job.getInstance(new Configuration(), "wordcount");
+        j.setJarByClass(WordCount.class);
+        j.setMapperClass(TokenizerMapper.class);
+        j.setCombinerClass(IntSumReducer.class);
+        j.setReducerClass(IntSumReducer.class);
+        j.setOutputKeyClass(Text.class);
+        j.setOutputValueClass(IntWritable.class);
+        FileInputFormat.addInputPath(j, new Path(a[0]));
+        FileOutputFormat.setOutputPath(j, new Path(a[1]));
+        System.exit(j.waitForCompletion(true) ? 0 : 1);
+    }
+}
+
+
+
+SPARK WORD COUNT (Scala)
+-
+val text_file = sc.textFile("file:///home/bdalab/input.txt")
+
+val word_count = text_file
+  .flatMap(line => line.split(" "))
+  .map(word => (word, 1))
+  .reduceByKey(_ + _)
+
+word_count.collect()
+
+
+SAMPLE INPUT (input.txt)
+-
+Good Morning
+welcome to bda scala and spark class
+
+have a great day
+
+
+Execution Steps:
+
+1. ssh localhost
+
+2. ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
+
+3. chmod 0600 ~/.ssh/authorized_keys
+
+4. hadoop-3.2.3/bin/hdfs namenode -format
+
+5. export PDSH_RCMD_TYPE=ssh
+
+6. start-all.sh
+
+7. jps
+
+8. sudo update-alternatives --config javac
+
+9. javac -source 8 -target 8 -cp "$(hadoop classpath)" WordCount.java
+
+10. jar -cvf wc.jar -C wc /.
+
+11. hdfs dfs -put input.txt /wcinput
+
+12. hadoop jar wc.jar WordCount /wcinput /wcoutput
+
+13. hdfs dfs -ls /wcoutput
+
+14. hdfs dfs -cat /wcoutput/part-r-00000
+
+
+SPARK EXECUTION (Scala shell)
+-
+spark-shell
+val text_file = sc.textFile("file:///home/bdalab/input.txt")
+val wc = text_file.flatMap(_.split(" ")).map((_,1)).reduceByKey(_+_)
+wc.collect()

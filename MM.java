@@ -1,0 +1,66 @@
+import java.io.IOException;
+import java.util.*;
+import java.util.AbstractMap.SimpleEntry;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.mapreduce.lib.input.*;
+import org.apache.hadoop.mapreduce.lib.output.*;
+
+public class MM {
+
+    private static SimpleEntry<Integer, Float> entry(String[] a) {
+        return new SimpleEntry<>(Integer.parseInt(a[1]), Float.parseFloat(a[2]));
+    }
+
+    public static class Map extends Mapper<LongWritable, Text, Text, Text> {
+        Text k = new Text(), v = new Text();
+
+        public void map(LongWritable key, Text val, Context c) throws IOException, InterruptedException {
+            String[] p = val.toString().split(",");
+            if (p[0].equals("A")) {
+                k.set(p[2]);
+                v.set("A," + p[1] + "," + p[3]);
+            } else {
+                k.set(p[1]);
+                v.set("B," + p[2] + "," + p[3]);
+            }
+            c.write(k, v);
+        }
+    }
+
+    public static class Reduce extends Reducer<Text, Text, Text, Text> {
+        Text out = new Text();
+
+        public void reduce(Text key, Iterable<Text> vals, Context c) throws IOException, InterruptedException {
+            List<SimpleEntry<Integer, Float>> A = new ArrayList<>(), B = new ArrayList<>();
+
+            for (Text t : vals) {
+                String[] p = t.toString().split(",");
+                (p[0].equals("A") ? A : B).add(entry(p));
+            }
+
+            for (SimpleEntry<Integer, Float> a : A)
+                for (SimpleEntry<Integer, Float> b : B) {
+                    out.set(a.getKey() + "," + b.getKey() + "," + (a.getValue() * b.getValue()));
+                    c.write(key, out);
+                }
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        Job j = Job.getInstance(new Configuration(), "MM");
+        j.setJarByClass(MM.class);
+        j.setMapperClass(Map.class);
+        j.setReducerClass(Reduce.class);
+        j.setOutputKeyClass(Text.class);
+        j.setOutputValueClass(Text.class);
+        j.setInputFormatClass(TextInputFormat.class);
+        j.setOutputFormatClass(TextOutputFormat.class);
+        FileInputFormat.addInputPath(j, new Path(args[0]));
+        FileOutputFormat.setOutputPath(j, new Path(args[1]));
+        System.exit(j.waitForCompletion(true) ? 0 : 1);
+    }
+}

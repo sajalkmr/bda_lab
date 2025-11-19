@@ -1,0 +1,102 @@
+
+
+INPUT FILES:
+employees.txt
+101,John,IT,50000
+102,Susan,HR,60000
+103,David,IT,55000
+104,Emma,Finance,75000
+105,James,HR,62000
+106,Robert,IT,58000
+
+departments.txt
+IT,Information Technology
+HR,Human Resources
+Finance,Finance Department
+
+
+1) SORT EMPLOYEES BY SALARY (DESC)
+employees = LOAD 'employees.txt' USING PigStorage(',') AS (id:int,name:chararray,dept:chararray,salary:int);
+sorted = ORDER employees BY salary DESC;
+DUMP sorted;
+
+
+2) GROUP EMPLOYEES BY DEPARTMENT
+employees = LOAD 'employees.txt' USING PigStorage(',') AS (id:int,name:chararray,dept:chararray,salary:int);
+grouped = GROUP employees BY dept;
+DUMP grouped;
+
+
+3) JOIN EMPLOYEES WITH DEPARTMENT NAMES
+employees = LOAD 'employees.txt' USING PigStorage(',') AS (id:int,name:chararray,dept:chararray,salary:int);
+departments = LOAD 'departments.txt' USING PigStorage(',') AS (dept_code:chararray,dept_name:chararray);
+joined = JOIN employees BY dept, departments BY dept_code;
+projected = FOREACH joined GENERATE id,name,dept_name,salary;
+DUMP projected;
+
+
+4) PROJECT ONLY NAME & SALARY
+employees = LOAD 'employees.txt' USING PigStorage(',') AS (id:int,name:chararray,dept:chararray,salary:int);
+projected = FOREACH employees GENERATE name, salary;
+DUMP projected;
+
+
+5) FILTER SALARY > 55000
+employees = LOAD 'employees.txt' USING PigStorage(',') AS (id:int,name:chararray,dept:chararray,salary:int);
+filtered = FILTER employees BY salary > 55000;
+DUMP filtered;
+
+
+
+PIG INSTALLATION (Ubuntu – Compact)
+-
+1. Download Pig:
+wget https://downloads.apache.org/pig/pig-0.17.0/pig-0.17.0.tar.gz
+
+2. Extract:
+tar -xvzf pig-0.17.0.tar.gz
+sudo mv pig-0.17.0 /usr/local/pig
+
+3. Edit ~/.bashrc:
+nano ~/.bashrc
+
+Add:
+export HADOOP_HOME=/home/bda-lab/hadoop-3.2.3
+export HADOOP_CONF_DIR=$HADOOP_HOME/etc/hadoop
+export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
+export PIG_HOME=/usr/local/pig
+export PATH=$PATH:$PIG_HOME/bin
+
+4. Reload:
+source ~/.bashrc
+
+5. Verify:
+echo $HADOOP_HOME
+echo $PIG_HOME
+hadoop version
+pig -version
+
+6. Start Hadoop:
+ssh localhost
+ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
+cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+chmod 0600 ~/.ssh/authorized_keys
+hadoop-3.2.3/bin/hdfs namenode -format
+export PDSH_RCMD_TYPE=ssh
+start-all.sh
+jps
+
+7. Launch Pig:
+pig
+(Shows "grunt>" prompt – ready to execute Pig commands)
+
+
+
+RUNNING PIG SCRIPTS
+-
+hdfs dfs -mkdir /piginput
+hdfs dfs -put employees.txt /piginput
+hdfs dfs -put departments.txt /piginput
+pig
+(Execute commands)
+quit
